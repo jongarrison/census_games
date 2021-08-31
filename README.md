@@ -10,3 +10,12 @@ Overview of the tools and data:
 * [US Census Data: Cities and Towns, "United States" csv file](https://www.census.gov/data/datasets/time-series/demo/popest/2010s-total-cities-and-towns.html#ds)
 
 
+## CsvKit
+
+Csvkit is an amazing set of tools for working with csv files. It relies on Python and I used virtual_env to install csvkit. See the notes/210829_install_notes.txt and the ./setup_venv.sh script on how to setup and use virtual_env with Python.
+
+My primary use of csvkit was to feed it the census csv file and have it suggest the SQL table create command in this case. I just added an index and renamed the table. A seriously handy utility.
+
+## PostgreSQL
+
+I opted to install PostgreSQL via [Homebrew](https://brew.sh/). Install it however you'd like. I tend to use the psql client that installs with directly with PostgreSQL for running queries. 
