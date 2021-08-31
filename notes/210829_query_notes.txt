@@ -1,0 +1,76 @@
+
+
+# States that grew the most:
+
+select sumlev, name, stname, popestimate2019, census2010pop, cast(popestimate2019 as integer)-cast(census2010pop as integer) as stephdiff from all_2019 where sumlev=40 order by stephdiff desc;
+
+
+
+
+# learned a lesson about data types
+
+select sumlev, name, stname, popestimate2019, popestimate2010, cast(popestimate2019 as integer)-cast(popestimate2010 as integer) as stephdiff from all_2019 order by stephdiff desc;
+
+
+
+select sumlev, name, stname, popestimate2019, popestimate2010, popestimate2019-popestimate2010 as stephdiff from all_2019 where name like "%ownsend%" order by stephdiff desc;
+
+
+# just testing with casts, works!
+
+select sumlev, name, stname, popestimate2019, popestimate2010, popestimate2019-popestimate2010 as stephdiff from all_2019 order by stephdiff desc;
+
+# trying to figure out sumlev codes for a town like PT:
+
+select sumlev, name, stname, popestimate2019, popestimate2010, popestimate2019-popestimate2010 as stephdiff from all_2019 where name like '%ownsend%';
+
+    162 | Port Townsend city | Washington    |            9831 |            9119 |       712
+    157 | Port Townsend city | Washington    |            9831 |            9119 |       712
+
+# so 162 or 157, lets go with 162 for now
+
+
+# Getting to some real stuff here!  For towns under 10000, who lost the most population?
+
+select sumlev, name, stname, popestimate2019, census2010pop, popestimate2010, popestimate2019-popestimate2010 as stephdiff from all_2019 where popestimate2019 < 10000 and sumlev = 162 order by stephdiff asc;
+
+# change as a percentage????  No, because in 2010 some of those places were zero
+
+select sumlev, name, stname, popestimate2019, census2010pop, popestimate2010, (popestimate2019-popestimate2010)/popestimate2010 as stephdiff from all_2019 where sumlev = 162 and popestimate2010 > 0 order by stephdiff asc;
+
+
+# Count the different sumlev types:
+
+select count(*) from all_2019 where sumlev = 162;
+> 19502
+
+select count(*) from all_2019;
+> 81434
+
+# Show a count of each sumlev type:
+
+select distinct sumlev, count(*) from all_2019 group by sumlev;
+ sumlev | count 
+--------+-------
+     40 |    51  ?States?
+     50 |  3142  ?Counties?
+     61 | 21063
+     71 | 13839
+    157 | 23714
+    162 | 19502
+    170 |     8
+    172 |   115
+
+
+# Show all of the states (sumlev = 40) and descending growth rates ("100*" to show more percentagy looking numbers)
+
+select sumlev, name, stname, popestimate2019, census2010pop, popestimate2010, 100*(popestimate2019-popestimate2010)/popestimate2010 as stephdiff from all_2019 where sumlev = 40 order by stephdiff desc;
+
+# Show the total growth of the country using sums of the state data (and format the big numbers nicely):
+
+select count(sumlev), count(stname), to_char(sum(popestimate2019), '999,999,999') as pop2019, to_char(sum(census2010pop::INT), '999,999,999') as pop2010 from all_2019 where sumlev = 40;
+
+
+
+
+

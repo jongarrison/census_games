@@ -1,0 +1,165 @@
+
+
+
+# Get brew going
+
+brew update
+
+## uh oh, brew needs it's own git checkout udpated to update properly
+
+	Error: 
+	  homebrew-core is a shallow clone.
+	  homebrew-cask is a shallow clone.
+	To `brew update`, first run:
+	  git -C /usr/local/Homebrew/Library/Taps/homebrew/homebrew-core fetch --unshallow
+	  git -C /usr/local/Homebrew/Library/Taps/homebrew/homebrew-cask fetch --unshallow
+	These commands may take a few minutes to run due to the large size of the repositories.
+	This restriction has been made on GitHub's request because updating shallow
+	clones is an extremely expensive operation due to the tree layout and traffic of
+	Homebrew/homebrew-core and Homebrew/homebrew-cask. We don't do this for you
+	automatically to avoid repeatedly performing an expensive unshallow operation in
+	CI systems (which should instead be fixed to not use shallow clones). Sorry for
+	the inconvenience!
+
+
+	# Install Postgress - from: https://wiki.postgresql.org/wiki/Homebrew
+
+	brew install postgresql
+	brew services start postgresql
+	psql postgres
+
+
+# edit the postgres configuration file by uncommenting the localhost and port 5432 line
+# NOT SURE ON THIS ONE, the default may work - see notes - https://www.elliotblackburn.com/installing-postgresql-on-macos-osx/
+	
+	vi /usr/local/var/postgres/postgresql.conf
+
+	#before this next command I had to delete a directory from 3/2018
+	initdb /usr/local/var/postgres -E utf8
+
+# The main user is now "jon", error messages may say no role "postgres", this likely means the username is incorrect
+
+	# Test the db:
+	psql -h localhost -d postgres
+	SELECT CURRENT_TIMESTAMP;
+	CREATE DATABASE census;
+
+
+# Installing pgadmin client via brew - see: https://formulae.brew.sh/cask/pgadmin4
+
+	brew install --cask pgadmin4
+
+# new app now installed: /Applications/pgAdmin 4.app
+
+	set password ####fools####
+
+
+# Prepping the census data with sublime:
+
+	# lowercase column names are simplest. Sublime can lowercase with CMD+KL
+	# The census data came in a bizarre encoding which sublime identified as 'Western (Windows 1252)', Sublime File Menu > Save with Encoding > UTF-8
+
+# Reading about importing the data via psql and using a tool called csvkit to guess a schema from the csv file
+
+
+# installing csv kit and using virtualenv to isolate the csv kit install
+
+	pip3 install virtualenv
+	jon@swifty:~/work_psql/census1$ virtualenv csvkit_venv
+	pip install csvkit 
+
+# see csvkit install directions here: https://csvkit.readthedocs.io/en/latest/tutorial/1_getting_started.html#installing-csvkit
+
+# I created scripts in ~/works_psql_census1 to be sourced which will load virtualenv properly. `source start_env_source.sh`
+
+# According to this stack overflow (https://dba.stackexchange.com/questions/253302/how-to-automate-the-detection-of-the-column-type-of-a-csv-file-for-a-table-creat), I can now use csvkit to suggest a schema like so (https://csvkit.readthedocs.io/en/latest/tutorial/1_getting_started.html#installing-csvkit)
+
+	csvsql -i postgresql data/sub-est2019_all.csv -e latin
+
+#Note the "-e latin" as csvkit complained that the csv file was not "utf-8-sig", "latin" was a guess on my part
+#that outputted (with "ID" line added by me and table name changed):
+
+
+CREATE TABLE "all_2019" (
+	id SERIAL,
+	sumlev DECIMAL NOT NULL, 
+	state DECIMAL NOT NULL, 
+	county DECIMAL NOT NULL, 
+	place DECIMAL NOT NULL, 
+	cousub DECIMAL NOT NULL, 
+	concit DECIMAL NOT NULL, 
+	primgeo_flag BOOLEAN NOT NULL, 
+	funcstat VARCHAR NOT NULL, 
+	name VARCHAR NOT NULL, 
+	stname VARCHAR NOT NULL, 
+	census2010pop VARCHAR NOT NULL, 
+	estimatesbase2010 DECIMAL NOT NULL, 
+	popestimate2010 DECIMAL NOT NULL, 
+	popestimate2011 DECIMAL NOT NULL, 
+	popestimate2012 DECIMAL NOT NULL, 
+	popestimate2013 DECIMAL NOT NULL, 
+	popestimate2014 DECIMAL NOT NULL, 
+	popestimate2015 DECIMAL NOT NULL, 
+	popestimate2016 DECIMAL NOT NULL, 
+	popestimate2017 DECIMAL NOT NULL, 
+	popestimate2018 DECIMAL NOT NULL, 
+	popestimate2019 DECIMAL NOT NULL
+);
+
+#which seems like a pretty good guess
+
+
+
+# Creating a table for the new data:
+
+	Run the command above
+
+# Import the csv table data with the COPY command (see: https://www.postgresqltutorial.com/import-csv-file-into-posgresql-table/)
+
+COPY all_2019(sumlev, state, county, place, cousub, concit, primgeo_flag, funcstat, name, stname, census2010pop, estimatesbase2010, popestimate2010, popestimate2011, popestimate2012, popestimate2013, popestimate2014, popestimate2015, popestimate2016, popestimate2017, popestimate2018, popestimate2019)
+FROM '/Users/jon/work_psql/census1/data/sub-est2019_all.csv'
+DELIMITER ','
+CSV HEADER;
+
+# Sweetnesssss!!!!!
+
+
+select id, name, stname, census2010pop, popestimate2019 from all_2019 limit 20;
+
+
+select id, name, stname, census2010pop, popestimate2019 from all_2019 where popestimate2019 = (select max(popestimate2019) from all_2019) limit 20;
+
+select id, name, stname, census2010pop, popestimate2019 from all_2019 order by popestimate2019 desc limit 20;
+
+#Find all of the sumlev codes for different place types
+select distinct sumlev from all_2019 order by sumlev asc;
+
+162 = city
+71, 157 = some variation on a city
+50 = county
+
+
+#20 most populus cities (sumlev = 162)
+select id, name, stname, census2010pop, popestimate2019 from all_2019 where sumlev = 162 order by popestimate2019 desc limit 20;
+
+
+====================================================
+### Random useful commands
+
+#head for showing the first -n number of lines:
+head -2 data/sub-est2019_all.csv
+
+#in psql you can get info on the current users with
+\du
+
+#list current dbs:
+\l
+
+#connect to a db:
+\c census
+
+#show conf lines for host and port
+egrep 'listen|port' /usr/local/var/postgres/postgresql.conf
+
+#In sublime lowercase with (had to do this for the data header names)
+CMD + KL
