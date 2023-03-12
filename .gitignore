@@ -1,2 +1,3 @@
 csvkit_venv/
 .DS_STORE
+data/sqlLiteCensusDb.db
