@@ -19,3 +19,7 @@ My primary use of csvkit was to feed it the census csv file and have it suggest 
 ## PostgreSQL
 
 I opted to install PostgreSQL via [Homebrew](https://brew.sh/). Install it however you'd like. I tend to use the psql client that installs with directly with PostgreSQL for running queries. 
+
+## SqlLite and Jupyter Notebooks
+
+I came back to this project much later to attempt some basic demo queries using Python/SqlLite/Jupyter Notebooks. My python environment is installed via [Anaconda](https://docs.anaconda.com/anaconda/install/index.html). I run Jupyter Notebooks in VSCode via the JupyterLab Plugin. 
